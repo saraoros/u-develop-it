@@ -1,35 +1,26 @@
 const express = require('express');
-const PORT = process.env.PORT || 3001;
-const app = express();
 const mysql = require('mysql2');
 const inputCheck = require('./utils/inputCheck');
 
-//middleware
+const PORT = process.env.PORT || 3001;
+const app = express();
+
+// Express middleware
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-//Connect to database
+// Connect to database
 const db = mysql.createConnection(
   {
     host: 'localhost',
+    // Your MySQL username,
     user: 'root',
+    // Your MySQL password
     password: '',
-    database: 'election',
+    database: 'election'
   },
   console.log('Connected to the election database.')
 );
-
-//helps to confirm connection with Express.js server when ran
-// app.get('/', (req,res) => {
-//     res.json({
-//         message: "Hello World"
-//     });
-// });
-
-// This is a key compenent that allows sql commands to be written in Node.js app
-// db.query(`SELECT * FROM candidates`, (err, rows) => {
-//   console.log(rows);
-// });
 
 // Get all candidates
 app.get('/api/candidates', (req, res) => {
@@ -42,7 +33,7 @@ app.get('/api/candidates', (req, res) => {
     }
     res.json({
       message: 'success',
-      data: rows,
+      data: rows
     });
   });
 });
@@ -59,7 +50,7 @@ app.get('/api/candidate/:id', (req, res) => {
     }
     res.json({
       message: 'success',
-      data: row,
+      data: row
     });
   });
 });
@@ -74,20 +65,19 @@ app.delete('/api/candidate/:id', (req, res) => {
       res.statusMessage(400).json({ error: res.message });
     } else if (!result.affectedRows) {
       res.json({
-        message: 'Candidate not found',
+        message: 'Candidate not found'
       });
     } else {
       res.json({
         message: 'deleted',
         changes: result.affectedRows,
-        id: req.params.id,
+        id: req.params.id
       });
     }
   });
 });
 
 // Create a candidate
-// This also checks to make sure that the data is inserted properly
 app.post('/api/candidate', ({ body }, res) => {
   const errors = inputCheck(
     body,
@@ -99,45 +89,24 @@ app.post('/api/candidate', ({ body }, res) => {
     res.status(400).json({ error: errors });
     return;
   }
-});
 
-const sql = `INSERT INTO candidates (first_name, last_name, industry_connected)
-  VALUES (?,?,?)`;
-const params = [body.first_name, body.last_name, body.industry_connected];
+  const sql = `INSERT INTO candidates (first_name, last_name, industry_connected)
+    VALUES (?,?,?)`;
+  const params = [body.first_name, body.last_name, body.industry_connected];
 
-db.query(sql, params, (err, result) => {
-  if (err) {
-    res.status(400).json({ error: err.message });
-    return;
-  }
-  res.json({
-    message: 'success',
-    data: body,
+  db.query(sql, params, (err, result) => {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    res.json({
+      message: 'success',
+      data: body
+    });
   });
 });
 
-//Delete a candidate
-// db.query(`DELETE FROM candidates WHERE id = ?`, 1, (err, result) => {
-//   if (err) {
-//     console.log(err);
-//   }
-//   console.log(result);
-// });
-
-// Create a candidate
-// const sql = `INSERT INTO candidates (id, first_name, last_name, industry_connected)
-//               VALUES (?,?,?,?)`;
-// const params = [1, 'Ronald', 'Firbank', 1];
-
-// db.query(sql, params, (err, result) => {
-//   if (err) {
-//     console.log(err);
-//   }
-//   console.log(result);
-// });
-
-//This is a catchall route, will throw error for unknown endpoints
-// This route will OVERRIDE other routes
+// Default response for any other request (Not Found)
 app.use((req, res) => {
   res.status(404).end();
 });
